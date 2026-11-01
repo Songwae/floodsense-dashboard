@@ -21,23 +21,30 @@ import type { Community, Node, NodeStatus } from '../types'
 // The map is the primary view — everything else on screen supports it.
 
 /**
- * Two OpenStreetMap-derived basemaps, neither of which needs an API key or a
- * billing account. Dark is the default for control-room use; light exists
+ * Two basemaps, neither of which needs an API key or a billing account
+ * (CARTO's free basemaps began requiring an API key and now serve
+ * "API KEY REQUIRED" error tiles, so dark uses Esri's World Dark Gray
+ * Canvas instead). Dark is the default for control-room use; light exists
  * because a dark map is close to unreadable on a tablet in direct sunlight,
  * which is exactly where regional staff will be using this.
+ *
+ * Esri Dark Gray Canvas only serves tiles up to zoom 16; maxZoom caps the
+ * map there so zooming in never hits blank tiles.
  */
 const BASEMAPS = {
   dark: {
     label: 'Dark',
-    url: 'https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png',
+    url: 'https://server.arcgisonline.com/ArcGIS/rest/services/Canvas/World_Dark_Gray_Base/MapServer/tile/{z}/{y}/{x}',
     attribution:
-      '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors &copy; <a href="https://carto.com/attributions">CARTO</a>',
+      'Tiles &copy; <a href="https://www.esri.com">Esri</a> &mdash; Esri, DeLorme, NAVTEQ',
+    maxZoom: 16,
   },
   light: {
     label: 'Daylight',
     url: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
     attribution:
       '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors',
+    maxZoom: 19,
   },
 } as const
 
@@ -224,7 +231,12 @@ export function MapView({
         className="h-full w-full"
         zoomControl={false}
       >
-        <TileLayer key={basemap} url={tiles.url} attribution={tiles.attribution} />
+        <TileLayer
+          key={basemap}
+          url={tiles.url}
+          attribution={tiles.attribution}
+          maxZoom={tiles.maxZoom}
+        />
         <ZoomControl position="topright" />
         <InvalidateOnResize />
         <DeselectOnMapClick onDeselect={() => onSelect(null)} />
